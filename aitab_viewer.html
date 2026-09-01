@@ -7,64 +7,83 @@
 
 <!--
   ============================================================================
-  AITAB VIEWER  (A2UI surface renderer)
+  AITAB VIEWER  (A2UI surface renderer — 9-component catalog)
   ----------------------------------------------------------------------------
-  Renders an A2UI-compatible SURFACE, not a hierarchical page. A surface is:
-    { "catalogId"?, "components": [ { id, component, ...props } ], "dataModel": {} }
-  - `components` is a FLAT list; exactly one has id "root" (a Page). Parents
-    reference children by id.
-  - Displayed data lives in `dataModel`; props bind to it with { "path": "/..." }
-    (absolute from the model root; relative inside a repeater's item scope).
-  - Array props (rows/items/pairs/groups/columns/boxes) may be a literal array
-    or a binding to an array in the data model (a repeater).
+  Renders an A2UI surface: { "components": [ { id, component, ...props } ],
+  "dataModel": {} }. Exactly one component has id "root" (a Page); parents
+  reference children by id; displayed data lives in `dataModel` and props bind
+  to it with { "path": "/..." }; array props may be a literal array or a
+  binding. Components (per component_schema.json): Page, Header, TextBlock,
+  RankedTable, Cards, SourceLinks, List, Timeline, Highlights.
 
-  The surface is read from the URL hash — "#" + encodeURIComponent(
-  JSON.stringify(surface)); the embedded #surface-config is a fallback demo.
-  Styling uses the Mozilla design tokens (light). Interactivity: checklist
-  checkboxes (two-way), table sort on sortable columns, best-value highlight.
+  Read from the URL hash — "#" + encodeURIComponent(JSON.stringify(surface));
+  the embedded #surface-config is a fallback demo. Static render (the catalog
+  has no interactive props). Mozilla design tokens, light.
   ============================================================================
 -->
 <script type="application/json" id="surface-config">
 {
-  "catalogId": "https://gentab.mozilla.org/catalogs/gentab/catalog.json",
   "components": [
-    { "id": "root", "component": "Page", "header": "hdr", "children": ["ans", "stats", "quotes_tbl", "todo"], "footer": "ftr" },
-    { "id": "hdr", "component": "Header", "eyebrow": "From 9 open tabs", "icon": "♨️", "title": "Heat Pump for a 1940s House", "subhead": "What nine sources agree on — and where they don't" },
-    { "id": "ans", "component": "Highlight", "eyebrow": "The short answer", "title": "A cold-climate heat pump works here — paired with the furnace for the coldest nights.", "body": "Eight of nine sources back dual-fuel for 1940s retrofits." },
-    { "id": "stats", "component": "StatBoxes", "items": { "path": "/stats" } },
-    { "id": "quotes_tbl", "component": "RankedTable", "title": "Installer Quotes", "itemType": "Service", "bestValue": true,
+    { "id": "root", "component": "Page", "header": "hdr",
+      "children": ["ans", "trio_note", "quotes", "picks", "plan", "todo", "notes", "srcs"] },
+    { "id": "hdr", "component": "Header",
+      "title": "Heat Pump for a 1940s House",
+      "subhead": "What nine sources agree on — and where they don't",
+      "references": { "items": { "path": "/sources" } } },
+    { "id": "ans", "component": "Highlights",
+      "eyebrow": "The short answer",
+      "title": "A cold-climate heat pump works here — paired with the furnace for the coldest nights.",
+      "body": "Eight of nine sources back dual-fuel for 1940s retrofits.",
+      "sources": { "items": { "path": "/sources" } } },
+    { "id": "trio_note", "component": "TextBlock",
+      "lead": "Rated output holds to about 5°F; below that the furnace covers a handful of nights a year." },
+    { "id": "quotes", "component": "RankedTable", "title": "Installer Quotes",
+      "description": "Bids pulled from the PDFs in your tabs",
       "columns": [
         { "key": "name", "label": "Installer", "type": "text", "role": "title" },
         { "key": "source", "label": "", "type": "text", "role": "subtitle" },
-        { "key": "price", "label": "Quote", "type": "currency", "role": "detail", "sortable": true, "goal": "min" },
-        { "key": "rating", "label": "Rating", "type": "rating", "role": "detail", "sortable": true, "max": 5, "goal": "max" },
-        { "key": "url", "label": "Open", "type": "url", "role": "action" }
+        { "key": "price", "label": "Quote", "type": "currency", "role": "detail", "goal": "min" },
+        { "key": "rating", "label": "Rating", "type": "rating", "role": "detail", "max": 5, "goal": "max" }
       ],
       "rows": { "path": "/quotes" } },
-    { "id": "todo", "component": "Checklist", "title": "Before deciding", "groups": { "path": "/todo" } },
-    { "id": "ftr", "component": "Footer", "text": "Keep it going", "children": ["b1", "b2"] },
-    { "id": "b1", "component": "Button", "label": "Draft the installer emails", "variant": "primary", "action": { "functionCall": { "call": "openUrl", "args": { "url": "app://compose" } } } },
-    { "id": "b2", "component": "Button", "label": "Open all 9 tabs", "action": { "functionCall": { "call": "openUrl", "args": { "url": "app://tabs/restore" } } } }
+    { "id": "picks", "component": "Cards", "title": "Two ways to go",
+      "items": { "path": "/cards" } },
+    { "id": "plan", "component": "Timeline", "title": "If we go ahead",
+      "items": { "path": "/plan" } },
+    { "id": "todo", "component": "List", "title": "Before deciding",
+      "groups": { "path": "/todo" } },
+    { "id": "notes", "component": "TextBlock",
+      "paragraphs": { "path": "/notes" } },
+    { "id": "srcs", "component": "SourceLinks", "title": "Sources",
+      "items": { "path": "/sources" } }
   ],
   "dataModel": {
-    "stats": [
-      { "value": "5°F", "label": "Rated down to", "body": "Variable-speed output holds to about 5°F." },
-      { "value": "20–30%", "label": "Projected savings", "body": "Three sources; two call it a wash." },
-      { "value": "$34.5k", "label": "Midpoint quote", "body": "Across two installer bids." }
+    "sources": [
+      { "title": "energy.gov", "href": "https://energy.gov" },
+      { "title": "NEEP", "href": "https://neep.org" },
+      { "title": "r/heatpumps", "href": "https://reddit.com/r/heatpumps" }
     ],
     "quotes": [
-      { "name": "Bright Build", "source": "yelp.com", "price": 31200, "rating": 4.6, "url": "https://www.yelp.com" },
-      { "name": "Sterling Mechanical", "source": "google.com", "price": 37800, "rating": 4.8, "url": "https://www.google.com" },
-      { "name": "Northwest Comfort", "source": "angi.com", "price": 34000, "rating": 4.2, "url": "https://www.angi.com" }
+      { "name": "Bright Build", "source": "yelp.com", "price": 31200, "rating": 4.6 },
+      { "name": "Sterling Mechanical", "source": "google.com", "price": 37800, "rating": 4.8 },
+      { "name": "Northwest Comfort", "source": "angi.com", "price": 34000, "rating": 4.2 }
+    ],
+    "cards": [
+      { "eyebrow": "Recommended", "title": "Cold-climate heat pump + keep the furnace", "link_title": "Spec at NEEP", "href": "https://neep.org" },
+      { "eyebrow": "Simpler", "title": "Full electric, no backup", "link_title": "Sizing guide", "href": "https://energy.gov" }
+    ],
+    "plan": [
+      { "date_label": "Week 1", "date_eyebrow": "Now", "title": "Manual J + two quotes", "description": "Size to the measured load, not the old furnace's rating." },
+      { "date_label": "Week 3", "title": "Permit & order equipment", "description": "City permit filed; account for lead time." },
+      { "date_label": "Week 6", "date_eyebrow": "Done", "title": "Install & inspect" }
     ],
     "todo": [
-      { "heading": "This week", "items": [
-        { "text": "Get a Manual J load calculation", "done": false },
-        { "text": "Confirm the electric-to-gas price ratio", "done": true }
-      ] },
-      { "heading": "Before signing", "items": [
-        { "text": "Ask each installer about their cold-climate model line", "done": false }
-      ] }
+      { "heading": "This week", "items": [ { "text": "Get a Manual J load calculation" }, { "text": "Confirm the electric-to-gas price ratio" } ] },
+      { "heading": "Before signing", "items": [ { "text": "Ask each installer about their cold-climate model line" }, { "text": "Check rebate eligibility" } ] }
+    ],
+    "notes": [
+      "Air sealing and attic insulation move the payback more than the model on the invoice.",
+      "Dual-fuel setups are sized around a switchover temperature, not a worst-case night."
     ]
   }
 }
@@ -74,8 +93,7 @@
   :root {
     --ink: #15141A; --ink-2: #42414D; --muted: #6F6E77; --muted-2: #8F8F9D;
     --accent: #7543E3; --accent-ink: #210340; --accent-soft: #F0EAFD;
-    --line: #E4D7FC; --line-2: #EFEAF8;
-    --surface: #fff; --surface-2: #F8F5FE; --surface-hover: #FAF6FF;
+    --line: #E4D7FC; --line-2: #EFEAF8; --surface-2: #F8F5FE; --surface-hover: #FAF6FF;
     --font-headline: "Mozilla Headline VF", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-text: "Mozilla Text VF", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --r-sm: 12px; --r-md: 16px; --r-lg: 24px; --r-xl: 80px;
@@ -84,179 +102,95 @@
   * { margin: 0; box-sizing: border-box; }
   body { font-family: var(--font-text); color: var(--ink-2); background: #fff; -webkit-font-smoothing: antialiased; }
   a { color: inherit; }
-  .display { font-family: var(--font-headline); font-stretch: 75%; font-weight: 600; letter-spacing: -.01em; line-height: 1; }
-  .kicker { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--accent); }
 
   /* hero header */
   .hero { background: var(--accent-ink); border-radius: 0 0 80px 80px; padding: 72px 72px 60px; position: relative; overflow: hidden; }
   .hero-glow { position: absolute; left: -6%; right: -6%; bottom: -340px; height: 460px; border-radius: 50%; background: var(--accent); filter: blur(70px); opacity: .8; pointer-events: none; }
-  .hero-in { position: relative; display: flex; flex-direction: column; gap: 14px; max-width: 680px; }
+  .hero-in { position: relative; display: flex; flex-direction: column; gap: 14px; max-width: 720px; }
   .hero .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: #B89CFF; }
-  .hero-title { display: flex; align-items: center; gap: 16px; }
-  .hero-title .ic { font-size: 40px; line-height: 1; }
   .hero h1 { font-family: var(--font-headline); font-stretch: 75%; font-weight: 600; font-size: 52px; line-height: .98; letter-spacing: -.01em; color: #fff; }
   .hero .sub { font-size: 16px; line-height: 1.5; color: #E4D7FC; }
 
   /* layout shell */
   .page { max-width: 940px; margin: 0 auto; }
-  .body { padding: 76px 72px 40px; display: flex; flex-direction: column; gap: 88px; }
-  .block { }
-  .b-head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 24px; }
+  .body { padding: 76px 72px 72px; display: flex; flex-direction: column; gap: 72px; }
+  .b-head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 22px; }
   .b-title { font-family: var(--font-headline); font-weight: 600; font-size: 26px; color: var(--accent-ink); }
   .b-desc { font-size: 14px; color: var(--muted); }
-  .center-title { font-size: 44px; color: var(--ink); text-align: center; margin-bottom: 36px; }
 
   /* text */
   .lead { font-family: var(--font-headline); font-weight: 600; font-size: 22px; line-height: 1.3; color: var(--accent-ink); text-wrap: pretty; }
   .para { font-size: 15px; line-height: 1.65; color: var(--ink-2); text-wrap: pretty; }
-  .stack { display: flex; flex-direction: column; gap: 16px; max-width: 720px; }
-  .sect { display: flex; flex-direction: column; gap: 8px; }
-  .sect h3 { font-family: var(--font-headline); font-weight: 600; font-size: 22px; color: var(--accent-ink); }
-  .quote-box { background: var(--surface-2); border-radius: var(--r-lg); padding: 38px 44px; display: flex; flex-direction: column; gap: 18px; max-width: 820px; }
-  .quote-box .q { font-family: var(--font-headline); font-weight: 600; font-size: 24px; line-height: 1.35; color: var(--accent-ink); }
-  .quote-box .attr { font-size: 13px; color: var(--muted); }
-  .side { display: grid; grid-template-columns: 300px 1fr; column-gap: 40px; align-items: start; }
-  .side .side-title { font-family: var(--font-headline); font-stretch: 75%; font-weight: 600; font-size: 40px; line-height: 1; color: var(--ink); }
-  .side .side-sub { font-size: 13.5px; line-height: 1.5; color: var(--muted); margin-top: 10px; }
+  .stack { display: flex; flex-direction: column; gap: 16px; max-width: 760px; }
 
   /* table */
   .thead, .trow { display: grid; gap: 16px; align-items: center; }
   .thead { padding: 0 12px 12px; border-bottom: 1px solid var(--line); }
   .th { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
-  .th.sortable { cursor: pointer; user-select: none; }
-  .th.sortable:hover { color: var(--accent); }
-  .th .caret { opacity: .6; font-size: 9px; }
-  .trow { padding: 20px 12px; text-decoration: none; color: inherit; border-radius: var(--r-md); transition: background .12s; }
-  a.trow:hover { background: var(--surface-hover); }
+  .trow { padding: 20px 12px; }
   .trow + .trow { border-top: 1px solid var(--line-2); }
   .cell { font-size: 14px; color: var(--ink-2); }
   .cell-title { display: flex; flex-direction: column; gap: 4px; }
-  .cell-title .nm { font-size: 14.5px; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .cell-title .nm { font-size: 14.5px; font-weight: 600; color: var(--ink); }
   .cell-title .src { font-size: 12px; color: var(--muted); }
-  .trow.best .nm::after { content: "Best value"; font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 2px 8px; }
-  .thumb { height: 64px; border-radius: var(--r-sm); background-size: cover; background-position: center; background-color: var(--surface-2); }
-  .kv { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; }
-  .kv .pair { display: flex; justify-content: space-between; gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--line-2); }
-  .kv .pair .k { font-size: 13.5px; color: var(--muted); }
-  .kv .pair .v { font-size: 14px; font-weight: 600; color: var(--ink); }
-  .matrix { display: grid; column-gap: 24px; }
-  .matrix .mcol { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
-  .matrix .mcol .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
-  .matrix .mcol .nm { font-size: 21px; font-weight: 600; color: var(--ink); line-height: 1.1; }
-  .matrix .mlabel { padding: 22px 0; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; }
-  .matrix .mcell { border-top: 1px solid var(--line-2); padding: 22px 0; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 600; color: var(--ink); }
-  .matrix .mcell.win { color: var(--accent); }
-  .pill { font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: #4B3A80; background: var(--accent-soft); border-radius: 999px; padding: 3px 9px; }
-  .group-row { display: grid; grid-template-columns: 200px 1fr; gap: 16px; padding: 20px 0; border-bottom: 1px solid var(--line-2); align-items: start; }
-  .group-row .gname { font-size: 14.5px; font-weight: 600; color: var(--ink); }
 
   /* cards */
   .card-grid { display: grid; gap: 24px; }
-  .card { display: flex; flex-direction: column; gap: 12px; text-decoration: none; color: inherit; border-radius: var(--r-md); transition: transform .16s, filter .16s; }
+  .card { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; border-radius: var(--r-md); transition: transform .16s, filter .16s; }
   a.card:hover { transform: translateY(-4px); filter: drop-shadow(var(--shadow)); }
-  .card-img { height: 200px; border-radius: var(--r-md); background-size: cover; background-position: center; background-color: var(--surface-2); }
+  .card-img { height: 180px; border-radius: var(--r-md); background: var(--surface-2); background-size: cover; background-position: center; }
   .card .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
-  .card .val { font-size: 22px; font-weight: 600; color: var(--ink); line-height: 1.1; }
+  .card .val { font-size: 20px; font-weight: 600; color: var(--ink); line-height: 1.15; }
   .card .brand { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
-  .card .brand .fav { width: 16px; height: 16px; border-radius: 4px; background-size: cover; background-color: var(--line); }
-  .wide-card { display: grid; grid-template-columns: 280px 1fr; column-gap: 32px; background: var(--surface-2); border-radius: var(--r-lg); padding: 20px; text-decoration: none; color: inherit; }
-  .wide-card .specs { display: flex; gap: 32px; margin-top: 4px; }
-  .wide-card .specs .s .k { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2); display: block; }
-  .wide-card .specs .s .v { font-size: 15px; font-weight: 600; color: var(--ink); }
-  .src-tile { display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--line); border-radius: 20px; padding: 20px 22px; text-decoration: none; color: inherit; transition: background .14s, border-color .14s; }
-  a.src-tile:hover { background: var(--surface-hover); border-color: #B89CFF; }
-  .src-tile .dom { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--muted); }
-  .src-tile .dom .fav { width: 16px; height: 16px; border-radius: 4px; background-size: cover; background-color: var(--line); }
-  .src-tile .st { font-size: 15.5px; font-weight: 600; line-height: 1.3; color: var(--ink); }
-  .src-tile .sb { font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+  .fav { width: 16px; height: 16px; border-radius: 4px; background: var(--line); background-size: cover; flex-shrink: 0; display: inline-block; }
 
   /* list */
-  .prog { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
-  .check-cols { display: grid; grid-template-columns: 1fr 1fr; column-gap: 48px; row-gap: 32px; }
-  .cgroup h3 { font-family: var(--font-headline); font-weight: 600; font-size: 22px; color: var(--accent-ink); padding-bottom: 14px; border-bottom: 1px solid var(--line); }
-  .citem { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line-2); cursor: pointer; }
-  .cgroup .citem:last-child { border-bottom: none; }
-  .cb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; flex-shrink: 0; border-radius: 6px; background: #fff; box-shadow: inset 0 0 0 1.5px #B89CFF; cursor: pointer; transition: background .12s, box-shadow .12s; }
-  .cb:hover { box-shadow: inset 0 0 0 1.5px var(--accent); }
-  .cb:checked { background: var(--accent) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16'><path d='M3.5 8l3.1 3.1 5.9-6' fill='none' stroke='%23fff' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/13px no-repeat; box-shadow: none; }
-  .citem .ct { font-size: 14px; color: var(--ink); transition: color .12s; }
-  .cb:checked + .ct { color: var(--muted-2); text-decoration: line-through; }
-  .tk { border-top: 1px solid var(--line); padding: 28px 0; display: grid; grid-template-columns: 1fr 42%; gap: 32px; align-items: start; }
-  .tk .num { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--accent); }
-  .tk .claim { font-family: var(--font-headline); font-weight: 600; font-size: 30px; line-height: 1.1; color: var(--ink); margin-top: 8px; }
-  .tk .ev { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
-  .bn { display: grid; grid-template-columns: 190px 1fr; gap: 28px; align-items: baseline; padding: 22px 0; border-bottom: 1px solid var(--line-2); }
-  .bn .fig { font-family: var(--font-headline); font-stretch: 75%; font-weight: 600; font-size: 46px; line-height: 1; color: var(--accent); }
-  .bn .bt { font-size: 15px; font-weight: 600; color: var(--ink); }
-  .bn .bb { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+  .lgroups { display: flex; flex-direction: column; gap: 26px; }
+  .lgroup h3 { font-family: var(--font-headline); font-weight: 600; font-size: 18px; color: var(--accent-ink); padding-bottom: 10px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+  .litems { list-style: none; }
+  .litem { font-size: 15px; color: var(--ink); padding: 10px 0 10px 22px; position: relative; border-bottom: 1px solid var(--line-2); }
+  .litem::before { content: "›"; position: absolute; left: 4px; color: var(--accent); font-weight: 700; }
+  .litem:last-child { border-bottom: none; }
 
-  /* timeline */
+  /* timeline (rail) */
   .rail { display: grid; grid-template-columns: 150px 40px 1fr; column-gap: 20px; }
   .rail .when { text-align: right; padding: 4px 0 40px; display: flex; flex-direction: column; gap: 2px; }
   .rail .when .lbl { font-size: 16px; font-weight: 600; color: var(--ink); }
-  .rail .when .sub { font-size: 12px; color: var(--muted-2); }
   .rail .when .eb { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
   .rail .marker { display: flex; flex-direction: column; align-items: center; }
   .rail .dot { width: 14px; height: 14px; margin-top: 4px; border-radius: 999px; flex-shrink: 0; background: #fff; box-shadow: inset 0 0 0 3px #B89CFF; }
-  .rail .dot.now { background: var(--accent); box-shadow: 0 0 0 6px #EDE3FE; }
   .rail .line { flex: 1; width: 2px; background: var(--line); }
   .rail .what { padding-bottom: 40px; display: flex; flex-direction: column; gap: 7px; }
-  .rail .what h3 { font-family: var(--font-headline); font-weight: 600; font-size: 26px; line-height: 1.1; color: var(--accent-ink); }
+  .rail .what h3 { font-family: var(--font-headline); font-weight: 600; font-size: 22px; line-height: 1.1; color: var(--accent-ink); }
   .rail .what p { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); max-width: 560px; }
-  .horiz { display: grid; column-gap: 20px; }
-  .horiz .step-dot { display: flex; align-items: center; }
-  .horiz .step-dot .d { width: 14px; height: 14px; border-radius: 999px; background: #B89CFF; flex-shrink: 0; }
-  .horiz .step-dot .d.now { background: var(--accent); box-shadow: 0 0 0 6px #EDE3FE; }
-  .horiz .step-dot .l { flex: 1; height: 2px; background: var(--line); margin-right: -14px; }
-  .horiz .step { padding-top: 20px; display: flex; flex-direction: column; gap: 7px; }
-  .horiz .step .eb { font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2); }
-  .horiz .step.now .eb { color: var(--accent); }
-  .horiz .step h3 { font-family: var(--font-headline); font-weight: 600; font-size: 22px; line-height: 1.15; color: var(--accent-ink); }
-  .horiz .step p { font-size: 13px; line-height: 1.5; color: var(--ink-2); }
-  .day { border-radius: var(--r-lg); padding: 24px 30px; display: grid; grid-template-columns: 120px 1fr; column-gap: 28px; align-items: start; }
-  .day.now { background: var(--accent-soft); }
-  .day .time { font-size: 17px; font-weight: 600; color: var(--accent-ink); }
-  .day .period { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted-2); }
-  .day.now .period { color: var(--accent); }
-  .day h3 { font-family: var(--font-headline); font-weight: 600; font-size: 22px; line-height: 1.15; color: var(--accent-ink); }
-  .day p { font-size: 13px; line-height: 1.55; color: var(--ink-2); }
 
   /* highlight */
-  .hl-full { background: var(--accent-ink); border-radius: var(--r-xl); padding: 60px 72px; display: flex; flex-direction: column; gap: 22px; position: relative; overflow: hidden; }
+  .hl-full { background: var(--accent-ink); border-radius: var(--r-xl); padding: 56px 64px; display: flex; flex-direction: column; gap: 20px; position: relative; overflow: hidden; }
   .hl-full .glow { position: absolute; right: -120px; bottom: -220px; width: 520px; height: 340px; border-radius: 50%; background: var(--accent); filter: blur(70px); opacity: .55; pointer-events: none; }
   .hl-full .eb { position: relative; font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #B89CFF; }
-  .hl-full h2 { position: relative; font-family: var(--font-headline); font-stretch: 75%; font-weight: 600; font-size: 40px; line-height: 1.08; letter-spacing: -.01em; color: #fff; max-width: 820px; text-wrap: pretty; }
+  .hl-full h2 { position: relative; font-family: var(--font-headline); font-stretch: 75%; font-weight: 600; font-size: 36px; line-height: 1.08; letter-spacing: -.01em; color: #fff; max-width: 820px; text-wrap: pretty; }
   .hl-full p { position: relative; font-size: 15px; line-height: 1.55; color: #E4D7FC; max-width: 680px; }
-  .hl-trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  .hl-box { background: #F0E7FB; border-radius: var(--r-xl); padding: 44px 40px; display: flex; flex-direction: column; gap: 10px; min-height: 180px; }
-  .hl-box .fig { font-family: var(--font-headline); font-stretch: 75%; font-weight: 600; font-size: 48px; line-height: 1; color: var(--accent); }
-  .hl-box .lb { font-size: 16px; font-weight: 600; color: var(--ink); }
-  .hl-box .bd { font-size: 13px; line-height: 1.5; color: var(--ink-2); }
-  .verdict { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .vbox { border-radius: var(--r-xl); padding: 52px 56px; display: flex; flex-direction: column; gap: 20px; }
-  .vbox.light { background: #F0E7FB; }
-  .vbox.dark { background: #3B1273; }
-  .vbox h3 { font-family: var(--font-headline); font-weight: 600; font-size: 26px; }
-  .vbox.light h3 { color: var(--ink); } .vbox.dark h3 { color: #fff; }
-  .vbox .pt .pt-t { font-size: 14px; font-weight: 600; }
-  .vbox .pt .pt-b { font-size: 14px; line-height: 1.55; }
-  .vbox.light .pt-t, .vbox.light .pt-b { color: var(--ink); }
-  .vbox.dark .pt-t { color: #fff; } .vbox.dark .pt-b { color: #E4D7FC; }
 
-  /* footer */
-  .keep { padding: 56px 72px 72px; background: linear-gradient(180deg, #fff 0%, #EDE6FB 100%); display: flex; flex-direction: column; align-items: center; gap: 18px; border-radius: 80px 80px 0 0; margin-top: 40px; }
-  .keep h2 { font-family: var(--font-headline); font-weight: 600; font-size: 24px; color: var(--ink); }
-  .chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-  .chip { font-size: 12.5px; color: #4B3A80; background: rgba(255,255,255,.7); border: 1px solid #D9CFF0; border-radius: 999px; padding: 9px 16px; text-decoration: none; transition: background .12s, border-color .12s, transform .12s; }
-  .chip:hover { background: #fff; border-color: var(--accent); color: var(--accent-ink); transform: translateY(-1px); }
-  .chip.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .chip.primary:hover { color: #fff; }
+  /* source links (chip row) — used standalone, in the Header, and in Highlights */
+  .links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .links-t { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); width: 100%; }
+  .lchip { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; text-decoration: none; color: #4B3A80; background: var(--accent-soft); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; transition: background .12s, border-color .12s; }
+  .lchip:hover { background: #fff; border-color: var(--accent); }
+  /* on dark backgrounds (hero / highlight) */
+  .hero .links, .hl-full .links { position: relative; margin-top: 4px; }
+  .hero .links-t, .hl-full .links-t { color: #B89CFF; }
+  .hero .lchip, .hl-full .lchip { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.22); color: #E4D7FC; }
+  .hero .lchip:hover, .hl-full .lchip:hover { background: rgba(255,255,255,.24); color: #fff; }
+
+  .err { padding: 48px 72px; }
+  .err h2 { font-family: var(--font-headline); color: var(--accent-ink); font-size: 24px; }
+  .err p { color: var(--muted); margin-top: 8px; }
 
   @media (max-width: 720px) {
-    .hero, .body, .keep { padding-left: 24px; padding-right: 24px; }
-    .side, .kv, .check-cols, .tk, .bn, .rail, .wide-card { grid-template-columns: 1fr; }
-    .hl-trio, .verdict, .card-grid { grid-template-columns: 1fr !important; }
+    .hero, .body, .err { padding-left: 24px; padding-right: 24px; }
+    .rail { grid-template-columns: 1fr; }
     .rail .when { text-align: left; }
+    .card-grid { grid-template-columns: 1fr !important; }
   }
 </style>
 </head>
@@ -267,7 +201,6 @@
 (function () {
   "use strict";
 
-  // Read the surface from the URL hash; fall back to the embedded demo.
   function loadSurface() {
     var raw = (location.hash || "").replace(/^#/, "");
     if (raw) {
@@ -290,7 +223,6 @@
   var SURFACE = loadSurface();
   var DM = SURFACE.dataModel || {};
   var byId = indexById(SURFACE.components);
-  var sortState = {};                 // componentId -> { key, dir }
   var root = document.getElementById("page");
 
   /* ---- helpers ---- */
@@ -299,25 +231,21 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  function bg(url) { return "background-image:url(&quot;" + esc(url) + "&quot;)"; }
+  function bg(url) { return url ? "background-image:url(&quot;" + esc(url) + "&quot;)" : ""; }
   function isBinding(v) {
-    return v && typeof v === "object" && !Array.isArray(v) && typeof v.path === "string" && Object.keys(v).length === 1;
+    return v && typeof v == "object" && !Array.isArray(v) && typeof v.path == "string" && Object.keys(v).length === 1;
   }
   function ptr(rootObj, path) {
     var segs = path.replace(/^\//, "").split("/");
     var n = rootObj;
     for (var i = 0; i < segs.length; i++) {
-      if (n == null || typeof n !== "object") return undefined;
+      if (n == null || typeof n != "object") return undefined;
       n = n[segs[i].replace(/~1/g, "/").replace(/~0/g, "~")];
     }
     return n;
   }
-  // Resolve a value that may be a { path } binding. Absolute paths (leading "/")
-  // resolve from the data-model root; relative paths from the item `scope`.
   function resolve(v, scope) {
-    if (isBinding(v)) {
-      return v.path.charAt(0) === "/" ? ptr(DM, v.path) : ptr(scope, v.path);
-    }
+    if (isBinding(v)) return v.path.charAt(0) === "/" ? ptr(DM, v.path) : ptr(scope, v.path);
     return v;
   }
   function txt(v, scope) { var r = resolve(v, scope); return r == null ? "" : String(r); }
@@ -331,8 +259,6 @@
     return '<div class="b-head">' + (t ? '<div class="b-title">' + t + "</div>" : "") +
       (d ? '<div class="b-desc">' + d + "</div>" : "") + "</div>";
   }
-
-  var NUM = { currency: 1, number: 1, rating: 1 };
   function fmt(field, v) {
     if (v == null || v === "") return "";
     var pre = field.prefix || "", suf = field.suffix || "";
@@ -341,295 +267,111 @@
       case "number": return pre + Number(v).toLocaleString() + suf;
       case "rating": return pre + v + " / " + (field.max || 5) + suf;
       case "date": var d = new Date(v); return isNaN(d) ? esc(v) : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-      case "boolean": return v ? "Yes" : "No";
-      case "tags": return (Array.isArray(v) ? v : []).map(esc).join(", ");
       default: return pre + esc(v) + suf;
     }
   }
-  function bestRow(cols, rows) {
-    var usable = cols.filter(function (c) { return c.goal && NUM[c.type]; }).map(function (c) {
-      var vals = rows.map(function (r) { return +r[c.key]; }).filter(function (x) { return !isNaN(x); });
-      if (!vals.length) return null;
-      var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
-      return mx !== mn ? { c: c, mn: mn, mx: mx } : null;
-    }).filter(Boolean);
-    if (usable.length < 2 || rows.length < 2) return null;
-    var best = null, top = -1;
-    rows.forEach(function (r) {
-      var s = 0, n = 0;
-      usable.forEach(function (u) { var v = +r[u.c.key]; if (isNaN(v)) return; var nm = (v - u.mn) / (u.mx - u.mn); if (u.c.goal === "min") nm = 1 - nm; s += nm; n++; });
-      if (n) { var sc = s / n; if (sc > top) { top = sc; best = r; } }
-    });
-    return best;
+  // Render a SourceLinks value (used by the SourceLinks block, Header.references,
+  // and Highlights.sources). `sl` is { title?, items }.
+  function sourceLinks(sl, scope) {
+    if (!sl) return "";
+    var items = list(sl.items, scope);
+    if (!items.length && !sl.title) return "";
+    var chips = items.map(function (s) {
+      return '<a class="lchip" href="' + esc(s.href) + '" target="_blank" rel="noopener">' +
+        (s.favicon ? '<span class="fav" style="' + bg(s.favicon) + '"></span>' : "") +
+        esc(s.title || s.href) + "</a>";
+    }).join("");
+    return '<div class="links">' + (sl.title ? '<span class="links-t">' + esc(txt(sl.title, scope)) + "</span>" : "") + chips + "</div>";
   }
 
   /* ==========================================================================
-     RENDERERS — keyed by A2UI component type. Each reads its props (resolving
-     { path } bindings against the data model) and returns an HTML string.
+     RENDERERS — one per catalog component type. Return an HTML string.
      ========================================================================== */
   var RENDERERS = {
     Header: function (c) {
       return '<div class="hero"><div class="hero-glow"></div><div class="hero-in">' +
-        (c.eyebrow ? '<span class="eyebrow">' + esc(txt(c.eyebrow)) + "</span>" : "") +
-        '<div class="hero-title">' + (c.icon ? '<span class="ic">' + esc(txt(c.icon)) + "</span>" : "") +
-        "<h1>" + esc(txt(c.title)) + "</h1></div>" +
-        (c.subhead ? '<span class="sub">' + esc(txt(c.subhead)) + "</span>" : "") + "</div></div>";
-    },
-    Footer: function (c) {
-      var btns = (Array.isArray(c.children) ? c.children : []).map(function (id) {
-        var b = byId[id]; return b && b.component === "Button" ? RENDERERS.Button(b) : "";
-      }).join("");
-      return '<div class="keep">' + (c.text ? "<h2>" + esc(txt(c.text)) + "</h2>" : "") + '<div class="chips">' + btns + "</div></div>";
-    },
-    Button: function (b) {
-      var fc = b.action && b.action.functionCall;
-      var href = fc && fc.args && fc.args.url ? fc.args.url : "";
-      var cls = "chip" + (b.variant === "primary" ? " primary" : "");
-      var label = esc(txt(b.label));
-      return href
-        ? '<a class="' + cls + '" href="' + esc(href) + '" target="_blank" rel="noopener">' + label + "</a>"
-        : '<span class="' + cls + '">' + label + "</span>";
+        (c.eyebrow && txt(c.eyebrow) ? '<span class="eyebrow">' + esc(txt(c.eyebrow)) + "</span>" : "") +
+        "<h1>" + esc(txt(c.title)) + "</h1>" +
+        (c.subhead ? '<span class="sub">' + esc(txt(c.subhead)) + "</span>" : "") +
+        sourceLinks(c.references, DM) + "</div></div>";
     },
 
-    Summary: function (c) {
+    TextBlock: function (c) {
       var body = (c.lead ? '<span class="lead">' + esc(txt(c.lead)) + "</span>" : "") +
         list(c.paragraphs).map(function (p) { return '<span class="para">' + esc(typeof p === "string" ? p : txt(p)) + "</span>"; }).join("");
-      if (c.sideTitle) {
-        return '<section class="block"><div class="side"><div><div class="side-title">' + esc(txt(c.title || "")) +
-          '</div></div><div class="stack">' + body + "</div></div></section>";
-      }
-      return '<section class="block"><div class="stack">' + body + "</div></section>";
-    },
-    Prose: function (c) {
-      var sects = list(c.sections).map(function (s) {
-        return '<div class="sect"><h3>' + esc(s.heading) + '</h3><p class="para">' + esc(s.body) + "</p></div>";
-      }).join("");
-      var inner = '<div class="stack" style="gap:32px">' + sects + "</div>";
-      if (c.sideTitle) {
-        return '<section class="block"><div class="side"><div><div class="side-title">' + esc(txt(c.title || "")) + "</div></div>" + inner + "</div></section>";
-      }
-      return '<section class="block">' + head(c) + inner + "</section>";
-    },
-    Quote: function (c) {
-      return '<section class="block"><div class="quote-box"><span class="q">' + esc(txt(c.quote)) + "</span>" +
-        (c.attribution ? '<span class="attr">' + esc(txt(c.attribution)) + "</span>" : "") + "</div></section>";
+      return '<section class="block">' + head(c) + '<div class="stack">' + body + "</div></section>";
     },
 
     RankedTable: function (c) {
       var cols = c.columns || [];
       var titleF = cols.filter(function (f) { return f.role === "title"; })[0];
       var subF = cols.filter(function (f) { return f.role === "subtitle"; })[0];
-      var imgF = cols.filter(function (f) { return f.role === "image"; })[0];
-      var actF = cols.filter(function (f) { return f.role === "action"; })[0];
       var details = cols.filter(function (f) { return (f.role || "detail") === "detail"; });
-      var rows = list(c.rows).slice();
-      var st = sortState[c.id];
-      if (st) {
-        var dir = st.dir === "desc" ? -1 : 1;
-        rows.sort(function (a, b) {
-          var x = a[st.key], y = b[st.key];
-          if (typeof x === "number" && typeof y === "number") return (x - y) * dir;
-          return String(x == null ? "" : x).localeCompare(String(y == null ? "" : y)) * dir;
-        });
-      }
-      var best = c.bestValue ? bestRow(cols, rows) : null;
-      var thumb = !!imgF;
-      var gtc = (thumb ? "88px " : "") + "1fr" + details.map(function () { return " 130px"; }).join("");
-
-      var thead = '<div class="thead" style="grid-template-columns:' + gtc + '">' + (thumb ? "<span></span>" : "") +
-        '<span class="th">' + esc(titleF ? titleF.label || "Name" : "Name") + "</span>";
-      details.forEach(function (f) {
-        var caret = st && st.key === f.key ? (st.dir === "desc" ? " ▼" : " ▲") : "";
-        thead += '<span class="th' + (f.sortable ? " sortable" : "") + '"' + (f.sortable ? ' data-sort="' + esc(c.id) + ":" + esc(f.key) + '"' : "") +
-          ">" + esc(f.label || "") + (caret ? '<span class="caret">' + caret + "</span>" : "") + "</span>";
-      });
-      thead += "</div>";
-
-      function cellsOf(r) {
-        var cells = thumb ? '<span class="thumb" style="' + (r[imgF.key] ? bg(r[imgF.key]) : "") + '"></span>' : "";
-        cells += '<span class="cell-title"><span class="nm">' + esc(r[titleF ? titleF.key : ""]) + "</span>" +
-          (subF && r[subF.key] ? '<span class="src">' + esc(r[subF.key]) + "</span>" : "") + "</span>";
+      var gtc = "1fr" + details.map(function () { return " 130px"; }).join("");
+      var thead = '<div class="thead" style="grid-template-columns:' + gtc + '">' +
+        '<span class="th">' + esc(titleF ? titleF.label || "Name" : "Name") + "</span>" +
+        details.map(function (f) { return '<span class="th">' + esc(f.label || "") + "</span>"; }).join("") + "</div>";
+      var rows = list(c.rows).map(function (r) {
+        var cells = '<span class="cell-title"><span class="nm">' + esc(r[titleF ? titleF.key : ""]) + "</span>" +
+          (subF && r[subF.key] != null ? '<span class="src">' + esc(r[subF.key]) + "</span>" : "") + "</span>";
         details.forEach(function (f) { cells += '<span class="cell">' + fmt(f, r[f.key]) + "</span>"; });
-        return cells;
-      }
-
-      if (c.groupBy) {
-        var groups = {};
-        rows.forEach(function (r) { var g = r[c.groupBy] || ""; (groups[g] = groups[g] || []).push(r); });
-        var gcols = "1fr" + details.map(function () { return " 130px"; }).join("");
-        var gh = Object.keys(groups).map(function (g) {
-          var inner = groups[g].map(function (r) {
-            return '<div class="trow" style="grid-template-columns:' + gcols + ';border:none;padding:14px 0">' + cellsOf(r) + "</div>";
-          }).join("");
-          return '<div class="group-row"><span class="gname">' + esc(g) + "</span><div>" + inner + "</div></div>";
-        }).join("");
-        return '<section class="block">' + head(c) + gh + "</section>";
-      }
-
-      var bodyHtml = rows.map(function (r) {
-        var href = actF && r[actF.key];
-        var tag = href ? "a" : "div", attrs = href ? ' href="' + esc(r[actF.key]) + '" target="_blank" rel="noopener"' : "";
-        return "<" + tag + ' class="trow' + (best && r === best ? " best" : "") + '" style="grid-template-columns:' + gtc + '"' + attrs + ">" + cellsOf(r) + "</" + tag + ">";
+        return '<div class="trow" style="grid-template-columns:' + gtc + '">' + cells + "</div>";
       }).join("");
-      var table = "<div>" + thead + bodyHtml + "</div>";
-      if (c.sideTitle) {
-        return '<section class="block"><div class="side"><div><div class="side-title">' + esc(txt(c.title || "")) + "</div>" +
-          (c.description ? '<div class="side-sub">' + esc(txt(c.description)) + "</div>" : "") + "</div>" + table + "</div></section>";
-      }
-      return '<section class="block">' + head(c) + table + "</section>";
+      return '<section class="block">' + head(c) + "<div>" + thead + rows + "</div></section>";
     },
 
-    MatrixTable: function (c) {
-      var cols = list(c.columns), rows = list(c.rows);
-      var gtc = "150px" + cols.map(function () { return " 1fr"; }).join("");
-      var h = '<div class="matrix" style="grid-template-columns:' + gtc + '"><div></div>';
-      cols.forEach(function (col) { h += '<div class="mcol">' + (col.label ? '<span class="eyebrow">' + esc(col.label) + "</span>" : "") + '<span class="nm">' + esc(col.name) + "</span></div>"; });
-      rows.forEach(function (r) {
-        h += '<div class="mlabel">' + esc(r.label) + "</div>";
-        (r.cells || []).forEach(function (cell) {
-          h += '<div class="mcell' + (cell.winner ? " win" : "") + '"><span>' + esc(cell.value) + "</span>" + (cell.note ? '<span class="pill">' + esc(cell.note) + "</span>" : "") + "</div>";
-        });
-      });
-      return '<section class="block">' + head(c) + h + "</div></section>";
-    },
-
-    KeyValueList: function (c) {
-      var pairs = list(c.pairs).map(function (p) {
-        return '<div class="pair"><span class="k">' + esc(p.label) + '</span><span class="v">' + esc(p.value) + "</span></div>";
-      }).join("");
-      return '<section class="block">' + head(c) + '<div class="kv">' + pairs + "</div></section>";
-    },
-
-    CardGrid: function (c) {
+    Cards: function (c) {
       var items = list(c.items);
-      var cols = c.centered ? "1fr 1fr" : "repeat(3, 1fr)";
+      var n = Math.min(Math.max(items.length, 1), 3);
       var cards = items.map(function (it) {
         var tag = it.href ? "a" : "div", href = it.href ? ' href="' + esc(it.href) + '" target="_blank" rel="noopener"' : "";
         return "<" + tag + ' class="card"' + href + ">" +
-          '<div class="card-img" style="' + (it.image ? bg(it.image) : "") + '"></div>' +
+          '<div class="card-img" style="' + bg(it.image) + '"></div>' +
           (it.eyebrow ? '<span class="eyebrow">' + esc(it.eyebrow) + "</span>" : "") +
-          (it.value ? '<span class="val">' + esc(it.value) + "</span>" : "") +
-          (it.title && !it.value ? '<span class="val">' + esc(it.title) + "</span>" : "") +
-          (it.subtitle ? '<span class="brand"><span class="fav" style="' + (it.favicon ? bg(it.favicon) : "") + '"></span>' + esc(it.value ? (it.title || it.subtitle) : it.subtitle) + "</span>" : "") +
+          '<span class="val">' + esc(it.title) + "</span>" +
+          (it.link_title || it.favicon
+            ? '<span class="brand">' + (it.favicon ? '<span class="fav" style="' + bg(it.favicon) + '"></span>' : "") + esc(it.link_title || "") + "</span>"
+            : "") +
           "</" + tag + ">";
       }).join("");
-      var inner = '<div class="card-grid" style="grid-template-columns:' + cols + '">' + cards + "</div>";
-      if (c.centered) return '<section class="block"><div class="center-title display">' + esc(txt(c.title || "")) + "</div>" + inner + "</section>";
-      return '<section class="block">' + head(c) + inner + "</section>";
+      return '<section class="block">' + head(c) +
+        '<div class="card-grid" style="grid-template-columns:repeat(' + n + ', 1fr)">' + cards + "</div></section>";
     },
 
-    WideCard: function (c) {
-      var items = list(c.items).map(function (it) {
-        var specs = (it.specs || []).map(function (s) { return '<span class="s"><span class="k">' + esc(s.label) + '</span><span class="v">' + esc(s.value) + "</span></span>"; }).join("");
-        var tag = it.href ? "a" : "div", href = it.href ? ' href="' + esc(it.href) + '" target="_blank" rel="noopener"' : "";
-        return "<" + tag + ' class="wide-card"' + href + '><div class="card-img" style="' + (it.image ? bg(it.image) : "") + '"></div><div class="stack" style="gap:12px">' +
-          (it.eyebrow ? '<span class="eyebrow" style="color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase">' + esc(it.eyebrow) + "</span>" : "") +
-          (it.title ? '<span class="b-title">' + esc(it.title) + "</span>" : "") +
-          (it.body ? '<span class="para" style="font-size:13.5px">' + esc(it.body) + "</span>" : "") +
-          (specs ? '<div class="specs">' + specs + "</div>" : "") + "</div></" + tag + ">";
-      }).join("");
-      return '<section class="block">' + head(c) + '<div class="stack" style="max-width:none;gap:16px">' + items + "</div></section>";
+    SourceLinks: function (c) {
+      return '<section class="block">' + head(c) + sourceLinks({ items: c.items }, DM) + "</section>";
     },
 
-    SourceTiles: function (c) {
-      var items = list(c.items).map(function (it) {
-        var tag = it.href ? "a" : "div", href = it.href ? ' href="' + esc(it.href) + '" target="_blank" rel="noopener"' : "";
-        return "<" + tag + ' class="src-tile"' + href + '><span class="dom"><span class="fav" style="' + (it.favicon ? bg(it.favicon) : "") + '"></span>' + esc(it.subtitle || "") + "</span>" +
-          (it.title ? '<span class="st">' + esc(it.title) + "</span>" : "") +
-          (it.body ? '<span class="sb">' + esc(it.body) + "</span>" : "") + "</" + tag + ">";
+    List: function (c) {
+      var groups = list(c.groups).map(function (g) {
+        var items = (list(g.items) || []).map(function (it) { return '<li class="litem">' + esc(it.text) + "</li>"; }).join("");
+        return '<div class="lgroup">' + (g.heading ? "<h3>" + esc(g.heading) + "</h3>" : "") + '<ul class="litems">' + items + "</ul></div>";
       }).join("");
-      return '<section class="block">' + head(c) + '<div class="card-grid" style="grid-template-columns:1fr 1fr">' + items + "</div></section>";
-    },
-
-    Checklist: function (c) {
-      var groups = list(c.groups);
-      var total = 0, done = 0;
-      groups.forEach(function (g) { (g.items || []).forEach(function (t) { total++; if (t.done) done++; }); });
-      var gh = groups.map(function (g, gi) {
-        var items = (g.items || []).map(function (t, ti) {
-          return '<label class="citem" data-g="' + gi + '" data-i="' + ti + '"><input type="checkbox" class="cb"' + (t.done ? " checked" : "") + '/><span class="ct">' + esc(t.text) + "</span></label>";
-        }).join("");
-        return '<div class="cgroup"><h3>' + esc(g.heading) + "</h3>" + items + "</div>";
-      }).join("");
-      var prog = (c.showProgress !== false && total) ? '<div class="prog">' + done + " of " + total + " done</div>" : "";
-      var grid = '<div class="check-cols" data-block="' + esc(c.id) + '">' + gh + "</div>";
-      if (c.sideTitle) {
-        return '<section class="block"><div class="side"><div><div class="side-title">' + esc(txt(c.title || "")) + "</div></div><div>" + prog + grid + "</div></div></section>";
-      }
-      return '<section class="block">' + head(c) + prog + grid + "</section>";
-    },
-
-    Takeaways: function (c) {
-      var tk = list(c.items).map(function (it, i) {
-        var n = it.number || String(i + 1).padStart(2, "0");
-        return '<div class="tk"><div><span class="num">' + esc(n) + '</span><div class="claim">' + esc(it.title || "") + '</div></div><div><span class="ev">' + esc(it.body || "") + "</span></div></div>";
-      }).join("");
-      return '<section class="block">' + (c.title ? '<div class="center-title display">' + esc(txt(c.title)) + "</div>" : "") + tk + "</section>";
-    },
-
-    BigNumbers: function (c) {
-      var bn = list(c.items).map(function (it) {
-        return '<div class="bn"><span class="fig">' + esc(it.number || "") + '</span><div><div class="bt">' + esc(it.title || "") + "</div>" + (it.body ? '<div class="bb">' + esc(it.body) + "</div>" : "") + "</div></div>";
-      }).join("");
-      return '<section class="block">' + head(c) + bn + "</section>";
+      return '<section class="block">' + head(c) + '<div class="lgroups">' + groups + "</div></section>";
     },
 
     Timeline: function (c) {
-      var items = list(c.items), v = c.variant;
-      if (v === "horizontal") {
-        var gtc = "repeat(" + items.length + ", 1fr)";
-        var dots = items.map(function (it, i) {
-          return '<div class="step-dot"><span class="d' + (it.state === "now" ? " now" : "") + '"></span>' + (i < items.length - 1 ? '<span class="l"></span>' : "") + "</div>";
-        }).join("");
-        var steps = items.map(function (it) {
-          return '<div class="step' + (it.state === "now" ? " now" : "") + '">' + (it.eyebrow ? '<span class="eb">' + esc(it.eyebrow) + "</span>" : "") + "<h3>" + esc(it.title) + "</h3>" + (it.body ? "<p>" + esc(it.body) + "</p>" : "") + "</div>";
-        }).join("");
-        return '<section class="block">' + head(c) + '<div class="horiz" style="grid-template-columns:' + gtc + '">' + dots + steps + "</div></section>";
-      }
-      if (v === "day-schedule") {
-        var days = items.map(function (it) {
-          return '<div class="day' + (it.state === "now" ? " now" : "") + '"><div><div class="time">' + esc(it.label || "") + "</div>" + (it.sublabel ? '<div class="period">' + esc(it.sublabel) + "</div>" : "") + "</div><div><h3>" + esc(it.title) + "</h3>" + (it.body ? "<p>" + esc(it.body) + "</p>" : "") + "</div></div>";
-        }).join("");
-        return '<section class="block">' + head(c) + '<div class="stack" style="max-width:none;gap:8px">' + days + "</div></section>";
-      }
+      var items = list(c.items);
       var rail = items.map(function (it, i) {
         var last = i === items.length - 1;
-        return '<div class="when">' + (it.eyebrow ? '<span class="eb">' + esc(it.eyebrow) + "</span>" : "") + '<span class="lbl">' + esc(it.label || "") + "</span>" + (it.sublabel ? '<span class="sub">' + esc(it.sublabel) + "</span>" : "") + "</div>" +
-          '<div class="marker"><span class="dot' + (it.state === "now" ? " now" : "") + '"></span>' + (last ? "" : '<span class="line"></span>') + "</div>" +
-          '<div class="what"><h3>' + esc(it.title) + "</h3>" + (it.body ? "<p>" + esc(it.body) + "</p>" : "") + "</div>";
+        return '<div class="when">' + (it.date_eyebrow ? '<span class="eb">' + esc(it.date_eyebrow) + "</span>" : "") +
+          '<span class="lbl">' + esc(it.date_label || "") + "</span></div>" +
+          '<div class="marker"><span class="dot"></span>' + (last ? "" : '<span class="line"></span>') + "</div>" +
+          '<div class="what"><h3>' + esc(it.title) + "</h3>" + (it.description ? "<p>" + esc(it.description) + "</p>" : "") + "</div>";
       }).join("");
-      var railHtml = '<div class="rail">' + rail + "</div>";
-      if (v === "side-title") {
-        return '<section class="block"><div class="side"><div><div class="side-title">' + esc(txt(c.title || "")) + "</div>" +
-          (c.description ? '<div class="side-sub">' + esc(txt(c.description)) + "</div>" : "") + "</div>" + railHtml + "</div></section>";
-      }
-      return '<section class="block">' + head(c) + railHtml + "</section>";
+      return '<section class="block">' + head(c) + '<div class="rail">' + rail + "</div></section>";
     },
 
-    Highlight: function (c) {
+    Highlights: function (c) {
       return '<section class="block"><div class="hl-full"><div class="glow"></div>' +
         (c.eyebrow ? '<span class="eb">' + esc(txt(c.eyebrow)) + "</span>" : "") +
         (c.title ? "<h2>" + esc(txt(c.title)) + "</h2>" : "") +
-        (c.body ? "<p>" + esc(txt(c.body)) + "</p>" : "") + "</div></section>";
-    },
-    StatBoxes: function (c) {
-      var boxes = list(c.items).map(function (it) {
-        return '<div class="hl-box"><span class="fig">' + esc(it.value) + '</span><span class="lb">' + esc(it.label) + "</span>" + (it.body ? '<span class="bd">' + esc(it.body) + "</span>" : "") + "</div>";
-      }).join("");
-      return '<section class="block"><div class="hl-trio">' + boxes + "</div></section>";
-    },
-    VerdictPair: function (c) {
-      var vb = list(c.boxes).map(function (box) {
-        var pts = (box.points || []).map(function (p) {
-          return '<div class="pt">' + (p.title ? '<div class="pt-t">' + esc(p.title) + "</div>" : "") + '<div class="pt-b">' + esc(p.body) + "</div></div>";
-        }).join("");
-        return '<div class="vbox ' + (box.tone === "dark" ? "dark" : "light") + '"><h3>' + esc(box.title) + "</h3>" + pts + "</div>";
-      }).join("");
-      return '<section class="block"><div class="verdict">' + vb + "</div></section>";
+        (c.body ? "<p>" + esc(txt(c.body)) + "</p>" : "") +
+        sourceLinks(c.sources, DM) + "</div></section>";
     }
   };
 
-  /* ---- compose: resolve the flat surface from the root Page ---- */
+  /* ---- compose ---- */
   function renderComp(c, scope) { var r = RENDERERS[c.component]; return r ? r(c, scope) : ""; }
   function renderChildren(childList, scope) {
     if (Array.isArray(childList)) {
@@ -637,13 +379,12 @@
     }
     if (childList && typeof childList === "object" && childList.componentId) {
       var tmpl = byId[childList.componentId];
-      if (!tmpl) return "";
-      return list(childList, scope).map(function (item) { return renderComp(tmpl, item); }).join("");
+      return tmpl ? list(childList, scope).map(function (item) { return renderComp(tmpl, item); }).join("") : "";
     }
     return "";
   }
   function errorHtml(msg) {
-    return '<div class="body"><section class="block"><h2 class="b-title">Couldn’t load this view</h2><p class="b-desc">' + esc(msg) + "</p></section></div>";
+    return '<div class="err"><h2>Couldn’t load this view</h2><p>' + esc(msg) + "</p></div>";
   }
   function build() {
     if (SURFACE && SURFACE.__error) { root.innerHTML = errorHtml(SURFACE.__error); return; }
@@ -655,33 +396,11 @@
     var html = "";
     if (pageComp.header && byId[pageComp.header]) html += renderComp(byId[pageComp.header], DM);
     html += '<div class="body">' + renderChildren(pageComp.children, DM) + "</div>";
-    if (pageComp.footer && byId[pageComp.footer]) html += renderComp(byId[pageComp.footer], DM);
     root.innerHTML = html;
   }
 
-  /* ---- interactivity ---- */
-  root.addEventListener("change", function (e) {
-    if (!e.target.classList.contains("cb")) return;
-    var li = e.target.closest("[data-g]"), sec = e.target.closest("[data-block]");
-    if (!li || !sec) return;
-    var comp = byId[sec.getAttribute("data-block")];
-    if (!comp) return;
-    var groups = list(comp.groups);         // ref into the data model (or literal)
-    var g = +li.getAttribute("data-g"), i = +li.getAttribute("data-i");
-    if (groups[g] && groups[g].items && groups[g].items[i]) {
-      groups[g].items[i].done = e.target.checked;
-      build();
-    }
-  });
-  root.addEventListener("click", function (e) {
-    var th = e.target.closest("[data-sort]"); if (!th) return;
-    var p = th.getAttribute("data-sort").split(":"), id = p[0], key = p[1];
-    var cur = sortState[id];
-    sortState[id] = (cur && cur.key === key) ? { key: key, dir: cur.dir === "asc" ? "desc" : "asc" } : { key: key, dir: "asc" };
-    build();
-  });
   window.addEventListener("hashchange", function () {
-    SURFACE = loadSurface(); DM = SURFACE.dataModel || {}; byId = indexById(SURFACE.components); sortState = {}; build();
+    SURFACE = loadSurface(); DM = SURFACE.dataModel || {}; byId = indexById(SURFACE.components); build();
   });
 
   build();
